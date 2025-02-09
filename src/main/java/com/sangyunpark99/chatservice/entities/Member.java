@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 @Getter
 @Entity
@@ -31,6 +32,9 @@ public class Member {
     private LocalDate birthDay;
 
     private String role;
+
+    @OneToMany(mappedBy = "member")
+    private Set<MemberChatRoomMapping> memberChatRoomMappings;
 
     @Builder
     public Member(String email, String nickName, Gender gender, String phoneNumber, LocalDate birthDay,

@@ -2,7 +2,7 @@ package com.sangyunpark99.chatservice.services;
 
 import com.sangyunpark99.chatservice.entities.Member;
 import com.sangyunpark99.chatservice.entities.enums.Gender;
-import com.sangyunpark99.chatservice.repository.MemberRepository;
+import com.sangyunpark99.chatservice.repository.MemberJpaRepository;
 import com.sangyunpark99.chatservice.vos.CustomOAuth2User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -20,7 +20,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
-    private final MemberRepository memberRepository;
+    private final MemberJpaRepository memberJpaRepository;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -29,7 +29,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         Map<String, Object> attributes = oAuth2User.getAttribute("kakao_account");
         String email = (String) attributes.get("email"); // down casting
 
-        Member member = memberRepository.findByEmail(email).orElseGet(() -> registerMember(attributes));
+        Member member = memberJpaRepository.findByEmail(email).orElseGet(() -> registerMember(attributes));
         CustomOAuth2User user = new CustomOAuth2User(member, attributes);
 
         return user;
@@ -47,7 +47,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .role("USER_ROLE")
                 .build();
 
-        return memberRepository.save(member);
+        return memberJpaRepository.save(member);
     }
 
     private LocalDate getBirthDay(Map<String, Object> attributeMode) {
