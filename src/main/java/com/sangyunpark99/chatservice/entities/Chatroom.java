@@ -19,6 +19,9 @@ public class Chatroom {
     @Column(name = "chatroom_id")
     private Long id;
 
+    @Transient
+    Boolean hasNewMessage;
+
     private String title;
 
     private LocalDateTime createdAt;
@@ -30,5 +33,9 @@ public class Chatroom {
     public Chatroom(String title, LocalDateTime createdAt) {
         this.title = title;
         this.createdAt = createdAt;
+    }
+
+    public void setHasNewMessage(boolean check) {
+        this.hasNewMessage = check;
     }
 }

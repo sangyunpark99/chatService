@@ -5,6 +5,9 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.cglib.core.Local;
+
+import java.time.LocalDateTime;
 
 @Getter
 @Entity
@@ -23,9 +26,15 @@ public class MemberChatRoomMapping {
     @ManyToOne(fetch = FetchType.LAZY)
     private Chatroom chatroom; // 채팅방은 여러개의 매핑을 가질 수 있다.
 
+    private LocalDateTime lastCheckedAt;
+
     @Builder
     public MemberChatRoomMapping(Member member, Chatroom chatroom) {
         this.member = member;
         this.chatroom = chatroom;
+    }
+
+    public void updateCheckedAt() {
+        this.lastCheckedAt = LocalDateTime.now();
     }
 }

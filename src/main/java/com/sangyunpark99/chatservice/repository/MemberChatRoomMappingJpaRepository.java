@@ -13,4 +13,6 @@ public interface MemberChatRoomMappingJpaRepository extends JpaRepository<Member
 
     @Query("select m from MemberChatRoomMapping m join fetch m.chatroom where m.member.id = :memberId")
     List<MemberChatRoomMapping> findAllByMemberId(Long memberId);
+
+    MemberChatRoomMapping findByMemberIdAndChatroomId(Long memberId, Long chatroomId);
 }

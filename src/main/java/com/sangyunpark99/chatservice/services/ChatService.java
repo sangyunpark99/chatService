@@ -1,10 +1,13 @@
 package com.sangyunpark99.chatservice.services;
 
+import com.sangyunpark99.chatservice.controllers.dto.ChatRoomDto;
 import com.sangyunpark99.chatservice.entities.Chatroom;
 import com.sangyunpark99.chatservice.entities.Member;
 import com.sangyunpark99.chatservice.entities.MemberChatRoomMapping;
+import com.sangyunpark99.chatservice.entities.Message;
 import com.sangyunpark99.chatservice.repository.ChatRoomJpaRepository;
 import com.sangyunpark99.chatservice.repository.MemberChatRoomMappingJpaRepository;
+import com.sangyunpark99.chatservice.repository.MessageJpaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,6 +23,7 @@ import java.util.stream.Collectors;
 public class ChatService {
 
     private final ChatRoomJpaRepository chatRoomJpaRepository;
+    private final MessageJpaRepository messageJpaRepository;
     private final MemberChatRoomMappingJpaRepository memberChatRoomMappingJpaRepository;
 
     @Transactional
@@ -35,14 +39,20 @@ public class ChatService {
         return chatroom;
     }
 
+    @Transactional
+    public boolean joinChatRoom(Member member, Long newChatroomId, Long currentChatroomId) { // 채팅방 유저 가입
 
-    public boolean joinChatRoom(Member member, Long chatroomId) { // 채팅방 유저 가입
-        if (memberChatRoomMappingJpaRepository.existsByMemberIdAndChatroomId(member.getId(), chatroomId)) {
+        if(currentChatroomId != null) { // 바로 채팅방에 들어가는 경우
+            updateLastCheckedAt(member, currentChatroomId);
+        }
+
+        if (memberChatRoomMappingJpaRepository.existsByMemberIdAndChatroomId(member.getId(), newChatroomId)) {
             log.info("이미 참여한 채팅방입니다!");
             return false;
         }
 
-        Chatroom chatroom = chatRoomJpaRepository.findById(chatroomId).orElseThrow(() -> new IllegalArgumentException(
+        Chatroom chatroom =
+                chatRoomJpaRepository.findById(newChatroomId).orElseThrow(() -> new IllegalArgumentException(
                 "채팅방이 존재하지 않습니다."));
 
         MemberChatRoomMapping memberChatRoomMapping = MemberChatRoomMapping.builder()
@@ -55,12 +65,22 @@ public class ChatService {
         return true;
     }
 
+    @Transactional
+    public void updateLastCheckedAt(Member member, Long currentChatroomId) { // 최신화
+        MemberChatRoomMapping memberChatRoomMappings =
+                memberChatRoomMappingJpaRepository.findByMemberIdAndChatroomId(member.getId(), currentChatroomId);
+
+        memberChatRoomMappings.updateCheckedAt();
+    }
+
+    @Transactional
     public boolean leaveChatroom(Member member, Long chatroomId) {
-        if(!memberChatRoomMappingJpaRepository.existsByMemberIdAndChatroomId(member.getId(), chatroomId)) {
+        if (!memberChatRoomMappingJpaRepository.existsByMemberIdAndChatroomId(member.getId(), chatroomId)) {
             log.info("참여하지 않은 채팅방입니다.");
             return false;
         }
 
+        chatRoomJpaRepository.deleteById(chatroomId);
         memberChatRoomMappingJpaRepository.deleteByMemberIdAndChatroomId(member.getId(), chatroomId);
         return true;
     }
@@ -71,6 +91,29 @@ public class ChatService {
                 memberChatRoomMappingJpaRepository.findAllByMemberId(member.getId());
 
         return memberChatRoomMappings
-                .stream().map((memberChatRoomMapping) -> memberChatRoomMapping.getChatroom()).collect(Collectors.toList());
+                .stream().map(
+                        (memberChatRoomMapping) -> {
+                            Chatroom chatroom = memberChatRoomMapping.getChatroom();
+                            chatroom.setHasNewMessage(messageJpaRepository.existsByChatroomIdAndCreatedAtAfter(chatroom.getId(),
+                                    memberChatRoomMapping.getLastCheckedAt()));
+                            return chatroom;
+                        }
+                ).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public Message saveMessage(Member member, Long chatroomId, String text) {
+        Chatroom chatroom =
+                chatRoomJpaRepository.findById(chatroomId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 " +
+                        "채팅방입니다."));
+
+        Message message =
+                Message.builder().text(text).member(member).chatroom(chatroom).createdAt(LocalDateTime.now()).build();
+
+        return messageJpaRepository.save(message);
+    }
+
+    public List<Message> getMessages(Long chatroomId) {
+        return messageJpaRepository.findAllByChatroomId(chatroomId);
     }
 }
