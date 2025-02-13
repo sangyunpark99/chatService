@@ -2,6 +2,7 @@ package com.sangyunpark99.chatservice.services;
 
 import com.sangyunpark99.chatservice.entities.Member;
 import com.sangyunpark99.chatservice.entities.enums.Gender;
+import com.sangyunpark99.chatservice.entities.enums.Role;
 import com.sangyunpark99.chatservice.repository.MemberJpaRepository;
 import com.sangyunpark99.chatservice.vos.CustomOAuth2User;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +45,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .phoneNumber((String) attributeMap.get("phone_number"))
                 .gender(Gender.valueOf(((String) attributeMap.get("gender")).toUpperCase()))
                 .birthDay(getBirthDay(attributeMap))
-                .role("USER_ROLE")
+                .role(Role.fromCode("USER_ROLE"))
                 .build();
 
         return memberJpaRepository.save(member);
