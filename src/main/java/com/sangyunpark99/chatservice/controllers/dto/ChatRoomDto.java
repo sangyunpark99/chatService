@@ -29,7 +29,6 @@ public class ChatRoomDto {
                 .id(chatRoom.getId())
                 .title(chatRoom.getTitle())
                 .memberCount(chatRoom.getMemberChatRoomMappings().size())
-                .hasNewMessage(chatRoom.getHasNewMessage())
                 .createdAt(chatRoom.getCreatedAt())
                 .build();
     }

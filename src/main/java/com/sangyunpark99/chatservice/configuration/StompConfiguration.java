@@ -10,7 +10,6 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @Configuration
 public class StompConfiguration implements WebSocketMessageBrokerConfigurer {
 
-
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // 웹 소켓 클라이언트가 어떠한 경로로 접근해야 하는가?
